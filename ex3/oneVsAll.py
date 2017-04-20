@@ -1,4 +1,5 @@
 import numpy as np
+#import lrCostFunction as lrcf
 from scipy.optimize import minimize
 
 from lrCostFunction import lrCostFunction
@@ -27,21 +28,24 @@ def oneVsAll(X, y, num_labels, Lambda):
 #
 # Hint: theta(:) will return a column vector.
 #
-# Hint: You can use y == c to obtain a vector of 1's and 0's that tell use 
+# Hint: You can use y == c to obtain a vector of0 1's and 0's that tell use
 #       whether the ground truth is true/false for this class.
 #
 # Note: For this assignment, we recommend using fmincg to optimize the cost
 #       function. It is okay to use a for-loop (for c = 1:num_labels) to
 #       loop over the different classes.
 
-    # Set Initial theta
-    initial_theta = np.zeros((n + 1, 1))
+    for c in xrange(num_labels):
+        # initial theta for c/class
+        initial_theta = np.zeros((n + 1, 1))
 
-    # This function will return theta and the cost
+        print("Training {:d} out of {:d} categories...".format(c + 1, num_labels))
+        myargs = (X, (y % 10 == c).astype(int), Lambda, True)
+         #minimize(lrcf.costFunctionReg, x0=initial_theta, args=myargs, options={'disp': True, 'maxiter': 13},method="Newton-CG", jac=True)
+        theta = minimize(lrCostFunction, initial_theta, args=myargs, method=None, jac=True, options={'maxiter': 50})
+        all_theta[c, :] = theta["x"]
 
-
-
-# =========================================================================
+    # =========================================================================
 
     return all_theta
 

@@ -1,5 +1,4 @@
 import numpy as np
-
 from ex2.sigmoid import sigmoid
 
 def predictOneVsAll(all_theta, X):
@@ -34,4 +33,17 @@ def predictOneVsAll(all_theta, X):
 
 # =========================================================================
 
-    return p + 1    # add 1 to offset index of maximum in A row
+
+
+    # ====================== YOUR CODE HERE ======================
+    # Instructions: Complete the following code to make predictions using
+    #               your learned logistic regression parameters (one-vs-all).
+    #               You should set p to a vector of predictions (from 1 to
+    #               num_labels).
+    #
+
+    p = np.argmax(sigmoid(X.dot(all_theta.T)), axis=1)
+
+    # =========================================================================
+
+    return p
