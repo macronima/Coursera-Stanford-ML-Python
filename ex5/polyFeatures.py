@@ -15,5 +15,14 @@ def polyFeatures(X, p):
 # 
 
 # =========================================================================
+    X_poly = X
+
+    # if p is equal or greater than 2
+    if p >= 2:
+
+        # for each number between column 2 (index 1) and last column
+        for k in xrange(1, p):
+            # add k-th column of polynomial features where k-th column is X.^k
+            X_poly = np.column_stack((X_poly, np.power(X, k + 1)))
 
     return X_poly

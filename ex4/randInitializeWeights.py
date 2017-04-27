@@ -13,9 +13,12 @@ def randInitializeWeights(L_in, L_out):
     #
     # Note: The first row of W corresponds to the parameters for the bias units
     #
-
+  #  W = np.zeros((L_out, 1 + L_in))
 
 
 # =========================================================================
+    # Randomly initialize the weights to small values
+    epsilon_init = 0.12
+    W = np.random.rand(L_out, 1 + L_in) * (2 * epsilon_init) - epsilon_init
 
     return W

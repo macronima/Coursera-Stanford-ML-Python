@@ -1,4 +1,6 @@
 import numpy as np
+import trainLinearReg as tlr
+import linearRegCostFunction as lrcf
 
 from trainLinearReg import trainLinearReg
 from linearRegCostFunction import linearRegCostFunction
@@ -53,11 +55,24 @@ def learningCurve(X, y, Xval, yval, Lambda):
 #
 
 # ---------------------- Sample Solution ----------------------
+    m = len(X)
 
+    # You need to return these values correctly
+    error_train = np.zeros((m, 1))
+    error_val = np.zeros((m, 1))
 
+    for i in xrange(1, m + 1):
+        # define training variables for this loop
+        X_train = X[:i]
+        y_train = y[:i]
 
-# -------------------------------------------------------------------------
+        # learn theta parameters with current X_train and y_train
+        #   note that for learning, we use lambda_val = 1 as the last argument
+        theta = tlr.trainLinearReg(X_train, y_train, 1)
 
-# =========================================================================
+        # fill in error_train(i) and error_val(i)
+        #   note that for error computation, we set lambda_val = 0 in the last argument
+        error_train[i - 1] = lrcf.linearRegCostFunction(X_train, y_train, theta, 0)[0]
+        error_val[i - 1] = lrcf.linearRegCostFunction(Xval, yval, theta, 0)[0]
 
     return error_train, error_val

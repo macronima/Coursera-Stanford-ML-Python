@@ -11,19 +11,18 @@ def computeNumericalGradient(J, theta):
 #        be the (approximately) the partial derivative of J with respect 
 #        to theta(i).)
 
-    numgrad = np.zeros(theta.shape[0])
-    perturb = np.zeros(theta.shape[0])
+    numgrad = np.zeros(theta.shape)
+    perturb = np.zeros(theta.shape)
     e = 1e-4
-    for p in range(theta.size):
 
+    for p in xrange(theta.size):
         # Set perturbation vector
-        perturb[p] = e
-        loss1 = J(theta - perturb)
-        loss2 = J(theta + perturb)
-
+        perturb.reshape(perturb.size, order="F")[p] = e
+        loss1, _ = J(theta - perturb)
+        loss2, _ = J(theta + perturb)
         # Compute Numerical Gradient
-        numgrad[p] = (loss2[0] - loss1[0]) / (2*e)
-        perturb[p] = 0
+        numgrad.reshape(numgrad.size, order="F")[p] = (loss2 - loss1) / (2 * e)
+        perturb.reshape(perturb.size, order="F")[p] = 0
 
     return numgrad
 

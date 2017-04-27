@@ -1,5 +1,8 @@
 import numpy as np
 
+import trainLinearReg as tlr
+import linearRegCostFunction as lrcf
+
 from trainLinearReg import trainLinearReg
 from linearRegCostFunction import linearRegCostFunction
 
@@ -43,5 +46,16 @@ def validationCurve(X, y, Xval, yval):
 
 
 # =========================================================================
+
+    for i in xrange(len(lambda_vec)):
+        lambda_val = lambda_vec[i]
+
+        # learn theta parameters with current lambda value
+        theta = tlr.trainLinearReg(X, y, lambda_val)
+
+        # fill in error_train[i] and error_val[i]
+        #   note that for error computation, we set lambda = 0 in the last argument
+        error_train[i] = lrcf.linearRegCostFunction(X, y, theta, 0)[0]
+        error_val[i] = lrcf.linearRegCostFunction(Xval, yval, theta, 0)[0]
 
     return lambda_vec, error_train, error_val

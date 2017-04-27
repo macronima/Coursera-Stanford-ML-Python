@@ -25,4 +25,4 @@ def gradientFunctionReg(theta, X, y, Lambda):
 
     grad = (1.0 / m) * X.T.dot(h - y) + (Lambda / m) * np.r_[[0], theta[1:]]
 
-    return (grad.flatten())
+    return (grad).flatten()

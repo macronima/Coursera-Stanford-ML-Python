@@ -3,7 +3,8 @@ from ex2.sigmoid import sigmoid
 import sys
 
 
-def lrCostFunction(theta, X, y, lambda_reg, return_grad=False):
+
+def lrCostFunction(theta, X, y, lambda_reg):
     # LRCOSTFUNCTION Compute cost and gradient for logistic regression with
     # regularization
     #   J = LRCOSTFUNCTION(theta, X, y, lambda_reg) computes the cost of using
@@ -17,7 +18,6 @@ def lrCostFunction(theta, X, y, lambda_reg, return_grad=False):
 
     # You need to return the following variables correctly 
     J = 0
-    grad = np.zeros(theta.shape)
 
     # ====================== YOUR CODE HERE ======================
     # Instructions: Compute the cost of a particular choice of theta.
@@ -28,26 +28,20 @@ def lrCostFunction(theta, X, y, lambda_reg, return_grad=False):
 
     # taken from costFunctionReg.py
 
-    one = y * (np.log(sigmoid(X.dot(theta)))).T.sum()
-    two = (1.0 - y) * (np.log(1 - sigmoid(X.dot(theta)))).T.sum()
-    reg = lambda_reg / 2.0 / m * (np.power(theta[1:theta.shape[0]],2)).sum()
+    h = sigmoid(X.dot(theta))
+
+    one =  (np.log(h)).T.dot(y)
+    two = (np.log(1 - h)).T.dot(1.0-y)
+    reg = lambda_reg / 2.0 / m * ((theta[1:])**2).sum()
     J = -(1.0 / m) * (one + two) + reg
+    return J
 
-    beta = ((sigmoid(X.dot(theta)).T - y).dot(X)).T
 
-    grad = (1.0 / m) * beta + (lambda_reg / m) * (theta)
 
-    # the case of j = 0 (recall that grad is a n+1 vector)
-    grad_no_regularization = (1.0 / m) * beta
+def lrgradientReg(theta,X,y,reg):
+    m=y.size
+    h = sigmoid(X.dot(theta))
 
-    # and then assign only the first element of grad_no_regularization to grad
-    grad[0] = grad_no_regularization[0]
+    grad = (1 / m) * X.T.dot(h - y) + (reg / m) * np.r_[[[0]], theta[1:].reshape(-1, 1)]
 
-    # display cost at each iteration
-    sys.stdout.write("Cost: %f   \r" % (J))
-    sys.stdout.flush()
-
-    if return_grad:
-        return J, grad
-    else:
-        return J
+    return (grad.flatten())
