@@ -1,14 +1,15 @@
 import numpy as np
 
-
-def cofiCostFunc(params, Y, R, num_users, num_movies, num_features, Lambda):
-    """returns the cost and gradient for the
-    """
+def cofiCostFunc(params, Y, R, num_users, num_movies, num_features, lambda_var):
+    #COFICOSTFUNC Collaborative filtering cost function
+    #   [J, grad] = COFICOSTFUNC(params, Y, R, num_users, num_movies, ...
+    #   num_features, lambda) returns the cost and gradient for the
+    #   collaborative filtering problem.
+    #
 
     # Unfold the U and W matrices from params
-    X = np.array(params[:num_movies*num_features]).reshape(num_features, num_movies).T.copy()
-    Theta = np.array(params[num_movies*num_features:]).reshape(num_features, num_users).T.copy()
-
+    X = np.reshape(params[:num_movies*num_features], (num_movies, num_features), order='F')
+    Theta = np.reshape(params[num_movies*num_features:], (num_users, num_features), order='F')
 
     # You need to return the following values correctly
     J = 0
@@ -36,10 +37,56 @@ def cofiCostFunc(params, Y, R, num_users, num_movies, num_features, Lambda):
     #                 partial derivatives w.r.t. to each element of X
     #        Theta_grad - num_users x num_features matrix, containing the
     #                     partial derivatives w.r.t. to each element of Theta
+    #
 
+    ### COST FUNCTION, NO REGULARIZATION
+
+    # X * Theta performed according to low rank matrix vectorization
+    squared_error = np.power(np.dot(X,Theta.T) - Y,2)
+
+    # for cost function, sum only i,j for which R(i,j)=1
+    J = (1/2.) * np.sum(squared_error * R)
+
+    ### GRADIENTS, NO REGULARIZATION
+
+    # X_grad is of dimensions n_m x n, where n_m = 1682 and n = 100
+    #  ( (X * Theta') - Y ) is n_m x n_u
+    #  (( (X * Theta') - Y ) .* R) is still n_m x n_u
+    #  Theta is n_u x n
+    #  thus X_grad = (( (X * Theta') - Y ) .* R) * Theta is n_m x n
+    # NOTE where filtering through R is applied:
+    # 	at ( (X * Theta') - Y ) - NOT after multiplying by Theta
+    # 	that means that for purposes of the gradient, we're only interested
+    # 	in the errors/differences in i, j for which R(i,j)=1
+    # NOTE also that even though we do a sum, we only do it over users,
+    # 	so we still get a matrix
+    X_grad = np.dot(( np.dot(X, Theta.T) - Y ) * R, Theta)
+
+
+    # Theta_grad is of dimensions n_u x n, where n_u = 943 and n = 100
+    #  ( (X * Theta') - Y ) is n_m x n_u
+    #  (( (X * Theta') - Y ) .* R) is still n_m x n_u
+    #  X is n_m x n
+    #  thus Theta_grad = (( (X * Theta') - Y ) .* R)' * X is n_u x n
+    # NOTE where filtering through R is applied,
+    # 	at ( (X * Theta') - Y ) - NOT after multiplying by X
+    # 	that means that for purposes of the gradient, we're only interested
+    # 	in the errors/differences in i, j for which R(i,j)=1
+    # NOTE also that even though we do a sum, we only do it over movies,
+    # 	so we still get a matrix
+    Theta_grad = np.dot((( np.dot(X, Theta.T) - Y ) * R).T, X)
+
+    ### COST FUNCTION WITH REGULARIZATION
+    # only add regularized cost to J now
+    J = J + (lambda_var/2.)*( np.sum( np.power(Theta, 2) ) + np.sum( np.power(X, 2) ) )
+
+    ### GRADIENTS WITH REGULARIZATION
+    # only add regularization terms
+    X_grad = X_grad + lambda_var*X
+    Theta_grad = Theta_grad + lambda_var*Theta
 
     # =============================================================
 
-    grad = np.hstack((X_grad.T.flatten(),Theta_grad.T.flatten()))
+    grad = np.concatenate((X_grad.reshape(X_grad.size, order='F'), Theta_grad.reshape(Theta_grad.size, order='F')))
 
     return J, grad

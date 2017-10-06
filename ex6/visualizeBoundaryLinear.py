@@ -1,17 +1,21 @@
-import matplotlib.pyplot as plt
 import numpy as np
-from plotData import plotData
-
+import matplotlib.pyplot as plt
+import plotData as pd
 
 def visualizeBoundaryLinear(X, y, model):
-    """plots a linear decision boundary
-    learned by the SVM and overlays the data on it
-    """
+    #VISUALIZEBOUNDARYLINEAR plots a linear decision boundary learned by the
+    #SVM
+    #   VISUALIZEBOUNDARYLINEAR(X, y, model) plots a linear decision boundary
+    #   learned by the SVM and overlays the data on it
 
-    w = model.coef_.flatten()
-    b = model.intercept_.flatten()
-    xp = np.linspace(min(X[:, 0]), max(X[:, 0]), 100)
-    yp = -(w[0]*xp + b)/w[1]
-    plotData(X, y)
-    plt.plot(xp, yp, '-b')
+    # plot decision boundary
+    # right assignments from http://stackoverflow.com/a/22356267/583834
+    w = model.coef_[0]
+    b = model.intercept_[0]
+    xp = np.linspace(X[:,0].min(), X[:,0].max(), 100)
+    yp = - (w[0] * xp + b) / w[1]
 
+    plt.plot(xp, yp, 'b-')
+
+    # plot training data
+    pd.plotData(X, y)

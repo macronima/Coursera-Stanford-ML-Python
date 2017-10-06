@@ -1,124 +1,106 @@
-from string import lower
-from porterStemmer import porterStemmer
-from getVocabList import getVocabList
 import re
+import getVocabList as gvl
+from stemming.porter2 import stem
+from getVocabList import getVocabList
+# This porter stemmer seems to more accurately duplicate the
+# porter stemmer used in the OCTAVE assignment code
+# (note: I had to do a pip install nltk)
+# I'll note that both stemmers have very similar results
+import nltk, nltk.stem.porter
+import numpy as np
 
-def processEmail(email_contents):
-    """preprocesses a the body of an email and
-    returns a list of word_indices
-    word_indices = PROCESSEMAIL(email_contents) preprocesses
-    the body of an email and returns a list of indices of the
-    words contained in the email.
+
+def preProcess(email):
+    """
+    Function to do some pre processing (simplification of e-mails).
+    Comments throughout implementation describe what it does.
+    Input = raw e-mail
+    Output = processed (simplified) email
+    """
+    # Make the entire e-mail lower case
+    email = email.lower()
+
+    # Strip html tags (strings that look like <blah> where 'blah' does not
+    # contain '<' or '>')... replace with a space
+    email = re.sub('<[^<>]+>', ' ', email);
+
+    # Any numbers get replaced with the string 'number'
+    email = re.sub('[0-9]+', 'number', email)
+
+    # Anything starting with http or https:// replaced with 'httpaddr'
+    email = re.sub('(http|https)://[^\s]*', 'httpaddr', email)
+
+    # Strings with "@" in the middle are considered emails --> 'emailaddr'
+    email = re.sub('[^\s]+@[^\s]+', 'emailaddr', email);
+
+    # The '$' sign gets replaced with 'dollar'
+    email = re.sub('[$]+', 'dollar', email);
+
+    return email
+
+
+def email2TokenList(rawEmail):
+    """
+    Function that takes in preprocessed (simplified) email, tokenizes it,
+    stems each word, and returns an (ordered) list of tokens in the e-mail
     """
 
-# Load Vocabulary
+    # I'll use the NLTK stemmer because it more accurately duplicates the
+    # performance of the OCTAVE implementation in the assignment
+    stemmer = nltk.stem.porter.PorterStemmer()
+
+    email = preProcess(rawEmail)
+
+    # Split the e-mail into individual words (tokens) (split by the delimiter ' ')
+    # but also split by delimiters '@', '$', '/', etc etc
+    # Splitting by many delimiters is easiest with re.split()
+    tokens = re.split('[ \@\$\/\#\.\-\:\&\*\+\=\[\]\?\!\(\)\{\}\,\'\"\>\_\<\;\%]', email)
+
+    # Loop over each word (token) and use a stemmer to shorten it,
+    # then check if the word is in the vocab_list... if it is,
+    # store what index in the vocab_list the word is
+    tokenlist = []
+    for token in tokens:
+
+        # Remove any non alphanumeric characters
+        token = re.sub('[^a-zA-Z0-9]', '', token);
+
+        # Use the Porter stemmer to stem the word
+        stemmed = stemmer.stem(token)
+
+        # Throw out empty tokens
+        if not len(token): continue
+
+        # Store a list of all unique stemmed words
+        tokenlist.append(str(stemmed))
+
+    return tokenlist
+
+def email2VocabIndices( rawEmail, vocabDict ):
+
+    tokenlist = email2TokenList( rawEmail )
+    indecesList = []
+    #l = length(vocabDict
+    for token in tokenlist:
+        if token in vocabDict:
+            indecesList.append(vocabDict.index(token))
+ #   indecesList = [ vocabDict[token] for token in tokenlist if token in vocabDict ]
+    qq=0
+    return indecesList
+
+
+def email2FeatureVector( rawEmail, vocabDict ):
+
+    n = len(vocabDict)
+    result = np.zeros((n,1))
+    vocab_indices = email2VocabIndices( rawEmail, vocabDict )
+    for idx in vocab_indices:
+        result[idx] = 1
+    return result
+
+
+def processEmail(emailContent):
     vocabList = getVocabList()
-
-# Init return value
-    word_indices = []
-
-# ========================== Preprocess Email ===========================
-
-# Find the Headers ( \n\n and remove )
-# Uncomment the following lines if you are working with raw emails with the
-# full headers
-
-# hdrstart = strfind(email_contents, ([chr(10) chr(10)]))
-# email_contents = email_contents(hdrstart(1):end)
-
-# Lower case
-    email_contents = lower(email_contents)
-
-# Strip all HTML
-# Looks for any expression that starts with < and ends with > and replace
-# and does not have any < or > in the tag it with a space
-    rx = re.compile('<[^<>]+>|\n')
-    email_contents = rx.sub(' ', email_contents)
-# Handle Numbers
-# Look for one or more characters between 0-9
-    rx = re.compile('[0-9]+')
-    email_contents = rx.sub('number ', email_contents)
-
-# Handle URLS
-# Look for strings starting with http:// or https://
-    rx = re.compile('(http|https)://[^\s]*')
-    email_contents = rx.sub('httpaddr ', email_contents)
-
-# Handle Email Addresses
-# Look for strings with @ in the middle
-    rx = re.compile('[^\s]+@[^\s]+')
-    email_contents = rx.sub('emailaddr ', email_contents)
-
-# Handle $ sign
-    rx = re.compile('[$]+')
-    email_contents = rx.sub('dollar ', email_contents)
-
-# ========================== Tokenize Email ===========================
-
-# Output the email to screen as well
-    print '==== Processed Email ====\n'
-
-# Process file
-    l = 0
-
-# Remove any non alphanumeric characters
-    rx = re.compile('[^a-zA-Z0-9 ]')
-    email_contents = rx.sub('', email_contents).split()
-
-    for str in email_contents:
-
-        # Tokenize and also get rid of any punctuation
-        # str = re.split('[' + re.escape(' @$/#.-:&*+=[]?!(){},''">_<#')
-        #                                + chr(10) + chr(13) + ']', str)
-
-        # Stem the word
-        # (the porterStemmer sometimes has issues, so we use a try catch block)
-        try:
-            str = porterStemmer(str.strip())
-        except:
-            str = ''
-            continue
-
-        # Skip the word if it is too short
-        if len(str) < 1:
-           continue
-
-        # Look up the word in the dictionary and add to word_indices if
-        # found
-        # ====================== YOUR CODE HERE ======================
-        # Instructions: Fill in this function to add the index of str to
-        #               word_indices if it is in the vocabulary. At this point
-        #               of the code, you have a stemmed word from the email in
-        #               the variable str. You should look up str in the
-        #               vocabulary list (vocabList). If a match exists, you
-        #               should add the index of the word to the word_indices
-        #               vector. Concretely, if str = 'action', then you should
-        #               look up the vocabulary list to find where in vocabList
-        #               'action' appears. For example, if vocabList{18} =
-        #               'action', then, you should add 18 to the word_indices
-        #               vector (e.g., word_indices = [word_indices  18] ).
-        #
-        # Note: vocabList{idx} returns a the word with index idx in the
-        #       vocabulary list.
-        #
-        # Note: You can use strcmp(str1, str2) to compare two strings (str1 and
-        #       str2). It will return 1 only if the two strings are equivalent.
-        #
-
-
-
-
-        # =============================================================
-
-        # Print to screen, ensuring that the output lines are not too long
-        if (l + len(str) + 1) > 78:
-            print str
-            l = 0
-        else:
-            print str,
-            l = l + len(str) + 1
-
-# Print footer
-    print '\n========================='
-    return word_indices
-
+    indecesList = email2VocabIndices(emailContent,vocabList)
+    featureList = email2FeatureVector(emailContent,vocabList)
+    return indecesList
